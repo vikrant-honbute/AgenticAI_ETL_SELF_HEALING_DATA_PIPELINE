@@ -460,7 +460,17 @@ def self_healing_pipeline():
             'average_confidence': summary['average_confidence'],
         }
 
-        logger.info(f'Pipeline Health Report: {json.dumps(report, indent=2)}')
+        # Save health report to output directory
+        os.makedirs(Config.OUTPUT_DIR, exist_ok=True)
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        offset = summary['run_info'].get('offset', 0)
+        report_file = f'{Config.OUTPUT_DIR}/health_report_{timestamp}_Offset{offset}.json'
+
+        with open(report_file, 'w', encoding='utf-8') as f:
+            json.dump(report, f, indent=2, default=str, ensure_ascii=False)
+
+        logger.info(f'Health report written to {report_file}')
+        logger.info(f'Pipeline Health Status: {health_status}')
         logger.info(f'Success Rate: {summary["rates"]["success_rate"]}, '
                     f'Healing Rate: {summary["rates"]["healing_rate"]}, '
                     f'Degradation Rate: {summary["rates"]["degradation_rate"]}')
