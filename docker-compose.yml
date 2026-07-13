@@ -10,12 +10,18 @@ x-airflow-common:
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    AIRFLOW__LOGGING__REMOTE_LOGGING: 'false'
+    AIRFLOW__WEBSERVER__LOG_FETCH_TIMEOUT_SEC: '5'
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
   volumes:
     - ./dags:/opt/airflow/dags
-    - ./logs:/opt/airflow/logs
+    # Use a named volume for logs to avoid Windows permission errors
+    - airflow-logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
-  user: "${AIRFLOW_UID:-50000}:0"
+    - ./input:/opt/airflow/input
+    - ./output:/opt/airflow/output
+  # Run as root to avoid permission issues on Windows/Docker Desktop
+  user: "0:0"
   depends_on:
     &airflow-common-depends-on
     postgres:
@@ -72,7 +78,6 @@ services:
   airflow-init:
     <<: *airflow-common
     entrypoint: /bin/bash
-    # yamllint disable rule:line-length
     command:
       - -c
       - |
@@ -84,7 +89,6 @@ services:
           --role Admin \
           --email admin@example.com \
           --password admin
-    # yamllint enable rule:line-length
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_UPGRADE: 'true'
@@ -94,8 +98,9 @@ services:
     user: "0:0"
     volumes:
       - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
+      - airflow-logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
 
 volumes:
   postgres-db-volume:
+  airflow-logs:

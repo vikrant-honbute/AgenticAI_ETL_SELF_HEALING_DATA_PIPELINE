@@ -14,6 +14,14 @@ unittests.cfg
 webserver_config.py
 airflow.db
 
+# Data directories (can be very large, never commit datasets)
+input/
+output/
+outputs/
+
+# Docker
+*.tar
+
 # Python
 __pycache__/
 *.py[cod]
